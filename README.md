@@ -4,7 +4,7 @@ Rebuilds the **HashLink JIT VM (`hl` + `libhl`)** and all required native `.hdll
 
 ## Why?
 
-Even though Rosetta 2 generally performs well, Dead Cells on macOS has occasional frame drops and stutters on Apple Silicon that a 2D pixel-art platformer really shouldn't have.
+Even though Rosetta 2 generally performs well, Dead Cells on macOS has very noticeable frame drops and stutters on Apple Silicon that a 2D pixel-art platformer really shouldn't have.
 
 The main reason seems to be how the game is built: Dead Cells doesn't ship as a native compiled game binary. The actual game logic and assets live in architecture-independent files (`hlboot.dat` HashLink bytecode and `res.pak`), while the `deadcells` executable is essentially an `x86_64` HashLink JIT VM plus native `.hdll` plugins. Under Rosetta 2, macOS ends up translating `x86_64` code generated on the fly by HashLink's JIT, which creates a noticeable bottleneck.
 
