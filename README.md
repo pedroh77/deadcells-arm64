@@ -8,7 +8,7 @@ Even though Rosetta 2 generally performs well, Dead Cells on macOS has very noti
 
 The main reason seems to be how the game is built: Dead Cells doesn't ship as a native compiled game binary. The actual game logic and assets live in architecture-independent files (`hlboot.dat` HashLink bytecode and `res.pak`), while the `deadcells` executable is essentially an `x86_64` HashLink JIT VM plus native `.hdll` plugins. Under Rosetta 2, macOS ends up translating `x86_64` code generated on the fly by HashLink's JIT, which creates a noticeable bottleneck.
 
-To get around this, I built a native `arm64` runtime that runs the unmodified Steam `hlboot.dat` and `res.pak` directly on Apple Silicon without Rosetta 2.
+To get around this, we can build a native `arm64` runtime that runs the unmodified Steam `hlboot.dat` and `res.pak` directly on Apple Silicon without Rosetta 2.
 
 ## Results
 
