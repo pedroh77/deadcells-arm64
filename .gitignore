@@ -1,0 +1,22 @@
+# macOS & Editor
+.DS_Store
+.vscode/
+analysis/err.txt
+
+# Cloned upstream repositories (fetched & patched via `make setup`)
+hashlink/
+libsrc/hlsteam/
+
+# Build & Packaging artifacts
+dist/
+tools/checknatives
+*.o
+*.hdll
+*.dylib
+*.tar.gz
+release/
+
+# Proprietary Steamworks SDK (do not commit)
+libsrc/sdkci/
+**/steamworks_sdk/
+**/libsteam_api.dylib

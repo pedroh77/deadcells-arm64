@@ -1,0 +1,15 @@
+diff --git a/native/common.cpp b/native/common.cpp
+index b2ff504..ecbd74c 100644
+--- a/native/common.cpp
++++ b/native/common.cpp
+@@ -386,3 +386,10 @@ DEFINE_PRIM(_BOOL, is_subscribed, _NO_ARG);
+ DEFINE_PRIM(_BOOL, is_subscribed_from_family_sharing, _NO_ARG);
+ DEFINE_PRIM(_BOOL, is_subscribed_from_free_weekend, _NO_ARG);
+ DEFINE_PRIM(_I32, get_earliest_purchase_unix_time, _I32);
++
++// deadcells-arm64: Motion Twin custom primitive (reconstructed from the shipped steam.hdll)
++HL_PRIM bool HL_NAME(is_user_logged_in)(){
++	if( !SteamUser() ) return false;
++	return SteamUser()->BLoggedOn();
++}
++DEFINE_PRIM(_BOOL, is_user_logged_in, _NO_ARG);

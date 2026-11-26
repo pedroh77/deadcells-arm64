@@ -1,0 +1,127 @@
+diff --git a/libs/uv/uv.c b/libs/uv/uv.c
+index e23a71c..9a6d7b3 100644
+--- a/libs/uv/uv.c
++++ b/libs/uv/uv.c
+@@ -350,3 +350,39 @@ DEFINE_PRIM(_I32, loop_alive_wrap, _LOOP);
+ DEFINE_PRIM(_VOID, stop_wrap, _LOOP);
+ 
+ DEFINE_PRIM(_BYTES, strerror, _I32);
++
++// ----- deadcells-arm64: Motion Twin's custom async DNS resolve (reconstructed from the shipped uv.hdll)
++// resolve(loop, host, unused, cb:(status, ipv4, ipv6) -> Void) : Bool
++
++static void on_resolve( uv_getaddrinfo_t *req, int status, struct addrinfo *res ) {
++	vclosure *c = (vclosure*)req->data;
++	int ip = 0;
++	vbyte *ip6 = NULL;
++	hl_remove_root(&req->data);
++	if( status == 0 && res ) {
++		if( res->ai_family == AF_INET )
++			ip = (int)((struct sockaddr_in*)res->ai_addr)->sin_addr.s_addr;
++		else if( res->ai_family == AF_INET6 )
++			ip6 = hl_copy_bytes((vbyte*)&((struct sockaddr_in6*)res->ai_addr)->sin6_addr, 16);
++	}
++	if( res ) uv_freeaddrinfo(res);
++	free(req);
++	if( c->hasValue )
++		((void(*)(void*,int,int,vbyte*))c->fun)(c->value, status, ip, ip6);
++	else
++		((void(*)(int,int,vbyte*))c->fun)(status, ip, ip6);
++}
++
++HL_PRIM bool HL_NAME(resolve)( uv_loop_t *loop, vbyte *host, int unused, vclosure *cb ) {
++	uv_getaddrinfo_t *req = (uv_getaddrinfo_t*)malloc(sizeof(uv_getaddrinfo_t));
++	int err;
++	req->data = cb;
++	hl_add_root(&req->data);
++	err = uv_getaddrinfo(loop, req, on_resolve, (char*)host, NULL, NULL);
++	if( err ) {
++		hl_remove_root(&req->data);
++		free(req);
++	}
++	return err == 0;
++}
++DEFINE_PRIM(_BOOL, resolve, _LOOP _BYTES _I32 _FUN(_VOID, _I32 _I32 _BYTES));
+diff --git a/src/main.c b/src/main.c
+index 4dd4864..f74a31e 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -344,6 +344,7 @@ int main(int argc, pchar *argv[]) {
+ 	hl_free(&ctx.code->alloc);
+ 	hl_global_free();
+ #endif
++	if( getenv("HL_TRACE_EXIT") ) { printf("[HL_TRACE_EXIT] main entrypoint returned 0\n"); fflush(stdout); }
+ 	return 0;
+ }
+ 
+diff --git a/src/module.c b/src/module.c
+index 82b5119..4860db7 100644
+--- a/src/module.c
++++ b/src/module.c
+@@ -504,6 +504,22 @@ static void *resolve_library( const char *lib, bool is_opt ) {
+ 
+ 	strcpy(tmp,lib);
+ 
++#	ifndef HL_WIN
++	{
++		// deadcells-arm64: prefer .hdll located alongside libhl.dylib so x86_64 .hdll files in cwd don't collide
++		Dl_info dli;
++		if( dladdr((void*)resolve_library, &dli) && dli.dli_fname ) {
++			const char *slash = strrchr(dli.dli_fname, '/');
++			if( slash ) {
++				char fullpath[1024];
++				snprintf(fullpath, sizeof(fullpath), "%.*s/%s.hdll", (int)(slash - dli.dli_fname), dli.dli_fname, lib);
++				h = dlopen(fullpath, RTLD_LAZY);
++				if( h != NULL ) return h;
++			}
++		}
++	}
++#	endif
++
+ #	ifdef HL_64
+ 	strcpy(tmp+strlen(lib),"64.hdll");
+ 	h = dlopen(tmp,RTLD_LAZY);
+@@ -688,6 +704,15 @@ static void hl_module_init_natives( hl_module *m ) {
+ 		char *p = tmp;
+ 		void *f;
+ 		if( is_opt ) lib++;
++		if( getenv("HL_DUMP_NATIVES") ) {
++			// deadcells-arm64: dump required natives (lib name signature) for compatibility checks
++			p = tmp;
++			append_type(&p,n->t);
++			*p++ = 0;
++			printf("NATIVE %s %s %s\n", n->lib, n->name, tmp);
++			m->functions_ptrs[n->findex] = hl_prim_not_loaded;
++			continue;
++		}
+ 		if( curlib != lib ) {
+ 			curlib = lib;
+ 			libHandler = resolve_library(lib, is_opt);
+@@ -696,6 +721,15 @@ static void hl_module_init_natives( hl_module *m ) {
+ 			m->functions_ptrs[n->findex] = disabled_primitive;
+ 			continue;
+ 		}
++		if( getenv("HL_DUMP_NATIVES") ) {
++			// deadcells-arm64: dump required natives (lib name signature) for compatibility checks
++			p = tmp;
++			append_type(&p,n->t);
++			*p++ = 0;
++			printf("NATIVE %s %s %s\n", n->lib, n->name, tmp);
++			m->functions_ptrs[n->findex] = hl_prim_not_loaded;
++			continue;
++		}
+ 		strcpy(p,"hlp_");
+ 		p += 4;
+ 		strcpy(p,n->name);
+diff --git a/src/std/sys.c b/src/std/sys.c
+index ef46546..bcae65e 100644
+--- a/src/std/sys.c
++++ b/src/std/sys.c
+@@ -159,6 +159,7 @@ HL_PRIM void hl_sys_profile_event( int code, vbyte *data, int dataLen ) {
+ }
+ 
+ HL_PRIM void hl_sys_exit( int code ) {
++	if( getenv("HL_TRACE_EXIT") ) { printf("[HL_TRACE_EXIT] hl_sys_exit(%d)\n", code); hl_dump_stack(); fflush(stdout); }
+ 	if( hl_setup.before_exit ) hl_setup.before_exit();
+ 	exit(code);
+ }
