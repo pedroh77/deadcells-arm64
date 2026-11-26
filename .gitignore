@@ -16,6 +16,9 @@ tools/checknatives
 *.tar.gz
 release/
 
+# Extracted release archives
+deadcells-arm64-*/
+
 # Proprietary Steamworks SDK (do not commit)
 libsrc/sdkci/
 **/steamworks_sdk/

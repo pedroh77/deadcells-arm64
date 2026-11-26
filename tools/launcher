@@ -1,0 +1,6 @@
+#!/bin/sh
+# Dead Cells — native Apple Silicon launcher (installed by install.sh).
+# Uncomment the next line if you use a Switch Pro / Nintendo-layout controller:
+# export SDL_GAMECONTROLLER_USE_BUTTON_LABELS=0
+cd "$(dirname "$0")" || exit 1
+exec ./arm64/hl hlboot.dat "$@"

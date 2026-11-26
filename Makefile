@@ -3,7 +3,7 @@ BREW ?= $(shell brew --prefix 2>/dev/null || echo /opt/homebrew)/opt
 HL_DIR := $(ROOT)/hashlink
 HL_BUILD := $(HL_DIR)/build-libs
 GAME_DIR ?= $(HOME)/Library/Application Support/Steam/steamapps/common/Dead Cells
-VERSION ?= 1.0.0
+VERSION ?= 1.0.1
 
 .PHONY: all setup vm sdl steam dist release steam-api check install uninstall clean
 
@@ -59,8 +59,8 @@ check: dist tools/checknatives
 	./tools/checknatives analysis/natives.txt dist
 
 install: dist
-	./tools/install.sh
+	./tools/install.sh --game-dir "$(GAME_DIR)"
 
 uninstall:
-	./tools/uninstall.sh
+	./tools/install.sh --game-dir "$(GAME_DIR)" --uninstall
 

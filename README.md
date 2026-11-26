@@ -24,35 +24,33 @@ Tested on a MacBook Air M1 (8 GB) running macOS 27.2.1.
 
 ## Quick Install (Pre-built Release)
 
-1. Download and extract the latest release archive from GitHub Releases (it expands to `arm64/`, `setup-steam-api.sh` and `LICENSE`).
-2. Open your Steam Dead Cells folder (default: `~/Library/Application Support/Steam/steamapps/common/Dead Cells`).
-3. Back up the original `deadcells` executable as `deadcells.real`.
-4. Copy the extracted `arm64/` folder into the Dead Cells directory.
-5. Create the `deadcells` wrapper script inside the Dead Cells directory and make it executable:
-   ```sh
-   #!/bin/sh
-   # Uncomment for Switch Pro / Nintendo-layout controllers:
-   # export SDL_GAMECONTROLLER_USE_BUTTON_LABELS=0
-   cd "$(dirname "$0")"
-   exec ./arm64/hl hlboot.dat "$@"
-   ```
-   ```bash
-   chmod +x deadcells
-   ```
-6. Clear macOS Gatekeeper quarantine attributes on the downloaded binaries:
-   ```bash
-   xattr -cr arm64 deadcells
-   ```
-7. Install Valve's Steamworks redistributable. `libsteam_api.dylib` is proprietary and **not** bundled in the release archive; the archive ships `setup-steam-api.sh`, which looks for an `arm64`-capable copy already on your machine (Steamworks SDK, the Steam client, or another ARM64 Steam game), thins it to `arm64` if it is universal, and copies it into the runtime folder:
-   ```bash
-   # from the extracted archive, targeting the installed runtime:
-   ./setup-steam-api.sh "$HOME/Library/Application Support/Steam/steamapps/common/Dead Cells/arm64"
-   ```
-   Without arguments it targets your installed `$GAME_DIR/arm64` (or `./arm64` when the game folder is not found); an existing `libsteam_api.dylib` is never overwritten.
+1. Download the latest release archive from GitHub Releases and extract it.
+2. Run the installer from the extracted folder:
 
-To revert, delete `arm64/` and rename `deadcells.real` back to `deadcells` (or verify game files in Steam).
+   ```bash
+   cd ~/Downloads/deadcells-arm64-*
+   ./install.sh
+   ```
 
-A Steam update to Dead Cells can restore the original `deadcells` launcher. If the game runs under Rosetta 2 again after an update, just redo the install (`make install`, or steps 3–7 above); it is non-destructive.
+3. Launch Dead Cells from Steam.
+
+The installer does everything in one go: it finds your Dead Cells folder (prompting for the path if it can't), copies the runtime into `arm64/`, keeps the original launcher as `deadcells.real`, installs the `deadcells` wrapper, clears the Gatekeeper quarantine and installs Valve's `libsteam_api.dylib` from a copy already on your machine.
+
+The archive contains `install.sh` (one-shot installer), `arm64/` (the native runtime), `launcher` (wrapper installed as `deadcells`), `setup-steam-api.sh` (Steamworks dylib helper, used by the installer) and `LICENSE`.
+
+Useful options:
+
+| Option | Description |
+|---|---|
+| `--game-dir PATH` | Dead Cells folder, for non-default Steam libraries |
+| `--steam-api-url URL` | download `libsteam_api.dylib` from a URL you trust, if no local copy is found |
+| `--uninstall` | restore the original launcher and remove `arm64/` |
+
+`libsteam_api.dylib` is proprietary and **not** bundled: it is not publicly downloadable (Valve ships it only inside the SDK, the Steam client and Steam games), so the installer prefers the copy in your Steam client app bundle or another ARM64 Steam game.
+
+To revert, run `./install.sh --uninstall` (or delete `arm64/` and rename `deadcells.real` back to `deadcells`).
+
+A Steam update to Dead Cells can restore the original `deadcells` launcher. If the game runs under Rosetta 2 again after an update, just rerun `./install.sh`; it is non-destructive.
 
 ## Building from Source
 
@@ -75,10 +73,10 @@ make setup
 # Build dist/ and verify all 503 native signatures
 make check
 
-# Install into Dead Cells Steam folder (non-destructive: backs up deadcells.real and installs arm64/)
+# Install into the Dead Cells Steam folder (runs tools/install.sh)
 make install
 
-# Restore original x86_64 launcher and remove arm64/
+# Restore the original x86_64 launcher and remove arm64/
 make uninstall
 
 # Build the release tarball (dist/ without Valve's libsteam_api.dylib)
