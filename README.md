@@ -20,6 +20,8 @@ To get around this, I built a native `arm64` runtime that runs the unmodified St
 | Steam API / Cloud / Achievements | Working (`libsteam_api.dylib` x86_64) | **Working** (`libsteam_api.dylib` universal `arm64`, installed by `setup-steam-api.sh`) |
 | Nintendo / Switch Pro layout fix | Optional | Optional (`SDL_GAMECONTROLLER_USE_BUTTON_LABELS=0`) |
 
+Tested on a MacBook Air M1 (8 GB) running macOS 27.2.1.
+
 ## Quick Install (Pre-built Release)
 
 1. Download and extract the latest release archive from GitHub Releases (it expands to `arm64/`, `setup-steam-api.sh` and `LICENSE`).
@@ -49,6 +51,8 @@ To get around this, I built a native `arm64` runtime that runs the unmodified St
    Without arguments it targets your installed `$GAME_DIR/arm64` (or `./arm64` when the game folder is not found); an existing `libsteam_api.dylib` is never overwritten.
 
 To revert, delete `arm64/` and rename `deadcells.real` back to `deadcells` (or verify game files in Steam).
+
+A Steam update to Dead Cells can restore the original `deadcells` launcher. If the game runs under Rosetta 2 again after an update, just redo the install (`make install`, or steps 3–7 above); it is non-destructive.
 
 ## Building from Source
 
